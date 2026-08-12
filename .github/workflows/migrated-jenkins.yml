@@ -3,9 +3,11 @@ name: Migrated Jenkins Pipelines
 on:
   push:
     branches:
+      - main
       - master
   pull_request:
     branches:
+      - main
       - master
   workflow_dispatch:
 
@@ -13,6 +15,7 @@ permissions:
   contents: read
 
 env:
+  SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
   VALUE_ONE: '1'
   VALUE_TWO: '2'
   VALUE_THREE: '3'
@@ -32,7 +35,7 @@ jobs:
         run: echo 'This step will never be run'
 
       - name: BASIC WHEN - Branch
-        if: ${{ (github.head_ref || github.ref_name) == 'master' }}
+        if: ${{ env.SOURCE_BRANCH == 'master' || env.SOURCE_BRANCH == 'main' }}
         run: echo 'BASIC WHEN - Master Branch!'
 
       - name: WHEN EXPRESSION with AND
@@ -48,7 +51,7 @@ jobs:
         run: echo 'AllOf Works!!'
 
       - name: Not AnyOf
-        if: ${{ (github.head_ref || github.ref_name) != 'development' && env.VALUE_TWO != '4' }}
+        if: ${{ env.SOURCE_BRANCH != 'development' && env.VALUE_TWO != '4' }}
         run: echo 'Not AnyOf - Works!'
 
   msbuild-dotnet:
@@ -100,6 +103,10 @@ jobs:
           name: project-release
           path: ProjectName/bin/Release/**/*
           if-no-files-found: warn
+
+      - name: Deployment handoff
+        if: ${{ env.SOURCE_BRANCH == 'master' || env.SOURCE_BRANCH == 'main' }}
+        run: echo 'Release output is available in the project-release artifact for downstream deployment.'
 
       - name: Publish build report
         # actions/upload-artifact v4
