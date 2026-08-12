@@ -2,7 +2,11 @@ name: Migrated Jenkins Pipelines
 
 on:
   push:
+    branches:
+      - master
   pull_request:
+    branches:
+      - master
   workflow_dispatch:
 
 permissions:
@@ -28,7 +32,7 @@ jobs:
         run: echo 'This step will never be run'
 
       - name: BASIC WHEN - Branch
-        if: ${{ github.ref_name == 'master' }}
+        if: ${{ (github.head_ref || github.ref_name) == 'master' }}
         run: echo 'BASIC WHEN - Master Branch!'
 
       - name: WHEN EXPRESSION with AND
@@ -44,7 +48,7 @@ jobs:
         run: echo 'AllOf Works!!'
 
       - name: Not AnyOf
-        if: ${{ github.ref_name != 'development' && env.VALUE_TWO != '4' }}
+        if: ${{ (github.head_ref || github.ref_name) != 'development' && env.VALUE_TWO != '4' }}
         run: echo 'Not AnyOf - Works!'
 
   msbuild-dotnet:
@@ -90,10 +94,20 @@ jobs:
           if-no-files-found: warn
 
       - name: Archive release output
+        if: ${{ (github.head_ref || github.ref_name) != 'master' }}
         # actions/upload-artifact v4
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ${{ github.ref_name == 'master' && 'deployment-package' || 'project-release' }}
+          name: project-release
+          path: ProjectName/bin/Release/**/*
+          if-no-files-found: warn
+
+      - name: Archive release output for deployment
+        if: ${{ (github.head_ref || github.ref_name) == 'master' }}
+        # actions/upload-artifact v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deployment-package
           path: ProjectName/bin/Release/**/*
           if-no-files-found: warn
 

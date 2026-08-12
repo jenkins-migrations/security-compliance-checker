@@ -22,7 +22,7 @@ Migrated the repository Jenkins configurations to GitHub Actions in `.github/wor
 | Root pipeline `agent any` | `conditional-stages` job on `ubuntu-latest` |
 | Jenkins environment variables | Workflow-level `env` values |
 | `when { expression { false } }` | Step-level `if: ${{ false }}` |
-| `when { branch 'master' }` | Step-level `if: ${{ github.ref_name == 'master' }}` |
+| `when { branch 'master' }` | Step-level source-branch check using `github.head_ref || github.ref_name` |
 | Jenkins AND/OR/environment conditions | Equivalent GitHub Actions expressions |
 | Scripted `node` checkout | `actions/checkout` pinned to commit SHA |
 | `nuget restore` | `nuget restore SolutionName.sln` on `windows-latest` |
@@ -60,4 +60,4 @@ The GitHub Advisory Database runtime check was attempted for these Actions depen
 
 The migrated MSBuild job preserves the Jenkins commands and paths (`SolutionName.sln`, `ProjectName.Tests`, and `ProjectName/bin/Release`). If those files are placeholders rather than repository files, the workflow will require the corresponding .NET solution and project artifacts before the job can complete successfully.
 
-The Jenkins deploy stage copied build output to `C:\Deploy\ProjectName\` on the Jenkins node. Because GitHub-hosted runners are ephemeral and no remote deployment target or credentials were defined in the Jenkins source, the migrated release artifact is named `deployment-package` on `master` for downstream deployment and `project-release` on other branches.
+The Jenkins deploy stage copied build output to `C:\Deploy\ProjectName\` on the Jenkins node. Because GitHub-hosted runners are ephemeral and no remote deployment target or credentials were defined in the Jenkins source, the migrated workflow uses mutually exclusive release upload steps: `deployment-package` on `master` for downstream deployment and `project-release` on other branches.
