@@ -30,7 +30,7 @@ Migrated the repository Jenkins configurations to GitHub Actions in `.github/wor
 | Jenkins `tool 'VSTest'` | `vstest.console.exe` on `windows-latest` |
 | `publishTestResults` | TRX artifact upload with `actions/upload-artifact` |
 | `archiveArtifacts` and `publishHTML` | Build artifact and report uploads |
-| Master-only deploy | Step-level `if: ${{ github.ref_name == 'master' }}` |
+| Master-only deploy | Master-gated deployment package artifact upload |
 
 ## Shared libraries
 
@@ -59,3 +59,5 @@ The GitHub Advisory Database runtime check was attempted for these Actions depen
 ## Behavioral notes
 
 The migrated MSBuild job preserves the Jenkins commands and paths (`SolutionName.sln`, `ProjectName.Tests`, and `ProjectName/bin/Release`). If those files are placeholders rather than repository files, the workflow will require the corresponding .NET solution and project artifacts before the job can complete successfully.
+
+The Jenkins deploy stage copied build output to `C:\Deploy\ProjectName\` on the Jenkins node. Because GitHub-hosted runners are ephemeral and no remote deployment target or credentials were defined in the Jenkins source, the migrated master-only deploy stage publishes the release output as a `deployment-package` artifact for downstream deployment.

@@ -105,7 +105,11 @@ jobs:
           path: ProjectName/bin/Release/index.html
           if-no-files-found: warn
 
-      - name: Deploy
+      - name: Publish deployment package
         if: ${{ github.ref_name == 'master' }}
-        shell: cmd
-        run: xcopy ProjectName\bin\Release\* C:\Deploy\ProjectName\ /E /Y
+        # actions/upload-artifact v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deployment-package
+          path: ProjectName/bin/Release/**/*
+          if-no-files-found: warn
