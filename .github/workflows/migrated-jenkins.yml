@@ -94,20 +94,10 @@ jobs:
           if-no-files-found: warn
 
       - name: Archive release output
-        if: ${{ (github.head_ref || github.ref_name) != 'master' }}
         # actions/upload-artifact v4
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: project-release
-          path: ProjectName/bin/Release/**/*
-          if-no-files-found: warn
-
-      - name: Archive release output for deployment
-        if: ${{ (github.head_ref || github.ref_name) == 'master' }}
-        # actions/upload-artifact v4
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: deployment-package
           path: ProjectName/bin/Release/**/*
           if-no-files-found: warn
 
