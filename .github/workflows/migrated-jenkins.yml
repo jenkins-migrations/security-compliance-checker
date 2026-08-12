@@ -89,11 +89,11 @@ jobs:
           path: '**/*.trx'
           if-no-files-found: warn
 
-      - name: Archive build artifacts
+      - name: Archive release output
         # actions/upload-artifact v4
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: project-release
+          name: ${{ github.ref_name == 'master' && 'deployment-package' || 'project-release' }}
           path: ProjectName/bin/Release/**/*
           if-no-files-found: warn
 
@@ -103,13 +103,4 @@ jobs:
         with:
           name: build-report
           path: ProjectName/bin/Release/index.html
-          if-no-files-found: warn
-
-      - name: Publish deployment package
-        if: ${{ github.ref_name == 'master' }}
-        # actions/upload-artifact v4
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: deployment-package
-          path: ProjectName/bin/Release/**/*
           if-no-files-found: warn
