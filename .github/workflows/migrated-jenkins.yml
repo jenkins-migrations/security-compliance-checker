@@ -1,0 +1,111 @@
+name: Migrated Jenkins Pipelines
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  VALUE_ONE: '1'
+  VALUE_TWO: '2'
+  VALUE_THREE: '3'
+
+jobs:
+  conditional-stages:
+    name: Conditional Jenkins stages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        # actions/checkout v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: A stage to be skipped
+        if: ${{ false }}
+        run: echo 'This step will never be run'
+
+      - name: BASIC WHEN - Branch
+        if: ${{ github.ref_name == 'master' }}
+        run: echo 'BASIC WHEN - Master Branch!'
+
+      - name: WHEN EXPRESSION with AND
+        if: ${{ env.VALUE_ONE == '1' && env.VALUE_THREE == '3' }}
+        run: echo 'WHEN with AND expression works!'
+
+      - name: WHEN EXPRESSION with OR
+        if: ${{ env.VALUE_ONE == '1' || env.VALUE_THREE == '2' }}
+        run: echo 'WHEN with OR expression works!'
+
+      - name: AllOf
+        if: ${{ env.VALUE_ONE == '1' && env.VALUE_TWO == '2' }}
+        run: echo 'AllOf Works!!'
+
+      - name: Not AnyOf
+        if: ${{ github.ref_name != 'development' && env.VALUE_TWO != '4' }}
+        run: echo 'Not AnyOf - Works!'
+
+  msbuild-dotnet:
+    name: MSBuild .NET pipeline
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        # actions/checkout v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Setup NuGet
+        # NuGet/setup-nuget v2
+        uses: NuGet/setup-nuget@d105a947828025cd7a980103c35ba2bfae586d0f
+
+      - name: Setup MSBuild
+        # microsoft/setup-msbuild v2
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce
+
+      - name: Restore
+        shell: pwsh
+        run: nuget restore SolutionName.sln
+
+      - name: Build
+        shell: pwsh
+        run: >-
+          msbuild SolutionName.sln
+          /p:Configuration=Release
+          /p:Platform="Any CPU"
+          /p:ProductVersion=1.0.0.${{ github.run_number }}
+
+      - name: Test
+        shell: pwsh
+        run: vstest.console.exe ProjectName.Tests\bin\Release\ProjectName.Tests.dll /Logger:trx
+
+      - name: Publish test results
+        if: ${{ always() }}
+        # actions/upload-artifact v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: test-results
+          path: '**/*.trx'
+          if-no-files-found: warn
+
+      - name: Archive build artifacts
+        # actions/upload-artifact v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: project-release
+          path: ProjectName/bin/Release/**/*
+          if-no-files-found: warn
+
+      - name: Publish build report
+        # actions/upload-artifact v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: build-report
+          path: ProjectName/bin/Release/index.html
+          if-no-files-found: warn
+
+      - name: Deploy
+        if: ${{ github.ref_name == 'master' }}
+        shell: cmd
+        run: xcopy ProjectName\bin\Release\* C:\Deploy\ProjectName\ /E /Y
